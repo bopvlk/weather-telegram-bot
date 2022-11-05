@@ -73,7 +73,7 @@ func New(c Container) (*telegramBot, error) {
 func newBot(cfg *models.Config) (*tgbotapi.BotAPI, error) {
 	bot, err := tgbotapi.NewBotAPIWithClient(cfg.TelegramToken, tgbotapi.APIEndpoint, &http.Client{Timeout: updateTimeout * time.Second})
 	if err != nil {
-		return nil, fmt.Errorf("tgbotapi.NewBotAPIWithClient() failed. Error:'%v'\n. ", err)
+		return nil, fmt.Errorf("tgbotapi.NewBotAPIWithClient() failed. Error:'%v'\n ", err)
 	}
 	bot.Debug = true
 	return bot, nil
