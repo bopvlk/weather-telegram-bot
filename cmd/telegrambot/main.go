@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/bot"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/bot"
 )
 
 func run() error {
