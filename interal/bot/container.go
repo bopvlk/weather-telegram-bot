@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 )
 
 type Container interface {

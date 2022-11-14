@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	"github.com/sirupsen/logrus"
 )
 
