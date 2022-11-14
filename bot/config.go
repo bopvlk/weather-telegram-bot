@@ -3,8 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
-
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
 )

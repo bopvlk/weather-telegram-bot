@@ -7,8 +7,7 @@ import (
 
 	"time"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/storage"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -23,7 +22,6 @@ type telegramBot struct {
 	bot      *tgbotapi.BotAPI
 	updates  tgbotapi.UpdatesChannel
 	forecast *forecast
-	storage  *storage.Storage
 }
 
 func (tg *telegramBot) Running() {
@@ -58,16 +56,10 @@ func New(c Container) (*telegramBot, error) {
 		return nil, err
 	}
 
-	storage, err := storage.NewStorage(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	t := &telegramBot{
 		c:        c,
 		bot:      bot,
 		forecast: newWeather(cfg),
-		storage:  storage,
 	}
 
 	botUpdate := tgbotapi.NewUpdate(updateOffset)

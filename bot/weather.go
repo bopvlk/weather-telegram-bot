@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"time"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
 )
 
 const (
@@ -19,12 +18,6 @@ const (
 	middleWeatherUrL     = "&appid="
 	suffixWeatherUrl     = "&units=metric"
 )
-
-type forecast struct {
-	w   forecastResponce
-	g   []geolocation
-	key string
-}
 
 type geolocation struct {
 	Name      string  `json:"name"`
@@ -36,18 +29,30 @@ type geolocation struct {
 
 type forecastResponce struct {
 	ResponseCode string `json:"cod"`
-	List         []struct {
-		DateTime    int `json:"dt"`
-		Temperature struct {
-			TemperatureMin float32 `json:"temp_min"`
-			TemperatureMax float32 `json:"temp_max"`
-			Humidity       int     `json:"humidity"`
-		} `json:"main"`
-		SkyWeather []struct {
-			InSky          string `json:"main"`
-			DescriptionSky string `json:"description"`
-		} `json:"weather"`
-	} `json:"list"`
+	List         []List `json:"list"`
+}
+
+type List struct {
+	DateTime    int          `json:"dt"`
+	Temperature Temperature  `json:"main"`
+	Weather     []SkyWeather `json:"weather"`
+}
+
+type SkyWeather struct {
+	InSky          string `json:"main"`
+	DescriptionSky string `json:"description"`
+}
+
+type Temperature struct {
+	TemperatureMin float32 `json:"temp_min"`
+	TemperatureMax float32 `json:"temp_max"`
+	Humidity       int     `json:"humidity"`
+}
+
+type forecast struct {
+	w   forecastResponce
+	g   []geolocation
+	key string
 }
 
 func newWeather(cfg *models.Config) *forecast {
@@ -72,7 +77,7 @@ func (tg *telegramBot) setGeolocationRequest(place string) error {
 
 func (tg *telegramBot) forecastRequest(coordinate string) (string, error) {
 	if err := tg.weatherUrlValidator(coordinate); err != nil {
-		return "Some problem with forecast. Pleace enter /start again.", fmt.Errorf("validator forecast problem. weatherUrlValidator(coordinate) failed err: %v", err)
+		return "Some problem with forecast. Pleace enter /start again.", fmt.Errorf("validator forecast problem err: %v", err)
 	}
 	url := fmt.Sprint(baseWeatherUrl, coordinate, middleWeatherUrL, tg.forecast.key, suffixWeatherUrl)
 	resp, err := http.Get(url)
@@ -88,14 +93,10 @@ func (tg *telegramBot) forecastRequest(coordinate string) (string, error) {
 
 	if tg.forecast.w.ResponseCode == "200" {
 		for count, w := range tg.forecast.w.List {
-			if err != nil {
-				return "", err
-			}
-			temp := (math.Round(float64(w.Temperature.TemperatureMin+w.Temperature.TemperatureMax) / 2))
-			res += fmt.Sprintf("In Time: %v Temperature is %v Humidity is %v\n\n",
-				fmt.Sprint(time.Unix(int64(w.DateTime), 0).Format("Mon 15:04:05")), temp,
+			res += fmt.Sprintf("In Time: %v, minimal temperature is %v, maximal temperature is %v, humidity is %v\n\n\n",
+				time.Unix(int64(w.DateTime), 0).UTC(), w.Temperature.TemperatureMin, w.Temperature.TemperatureMax,
 				w.Temperature.Humidity)
-			if count == 10 {
+			if count == 5 {
 				break
 			}
 		}
