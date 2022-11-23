@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
-
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
 )

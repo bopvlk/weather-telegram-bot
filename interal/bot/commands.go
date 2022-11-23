@@ -41,7 +41,9 @@ func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) erro
 	case fromBotStartIfLogged:
 		msg.ReplyMarkup = keyboardJustLogged
 	case fromBotSelectPlace:
-		tg.setGeolocationRequest(message.Text)
+		if err := tg.setGeolocationRequest(message.Text); err != nil {
+			return err
+		}
 		if len(tg.forecast.g) == 0 {
 			msg.Text = fromBotNotFoundCity
 			markerFindCity = true

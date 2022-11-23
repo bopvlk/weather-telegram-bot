@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"time"
@@ -21,33 +21,9 @@ const (
 )
 
 type forecast struct {
-	w   forecastResponce
-	g   []geolocation
-	key string
-}
-
-type geolocation struct {
-	Name      string  `json:"name"`
-	Latitude  float32 `json:"lat"`
-	Longitude float32 `json:"lon"`
-	Country   string  `json:"country"`
-	Region    string  `json:"state"`
-}
-
-type forecastResponce struct {
-	ResponseCode string `json:"cod"`
-	List         []struct {
-		DateTime    int `json:"dt"`
-		Temperature struct {
-			TemperatureMin float32 `json:"temp_min"`
-			TemperatureMax float32 `json:"temp_max"`
-			Humidity       int     `json:"humidity"`
-		} `json:"main"`
-		SkyWeather []struct {
-			InSky          string `json:"main"`
-			DescriptionSky string `json:"description"`
-		} `json:"weather"`
-	} `json:"list"`
+	weatherForecast models.ForecastResponce
+	g               []models.Geolocation
+	key             string
 }
 
 func newWeather(cfg *models.Config) *forecast {
@@ -63,7 +39,10 @@ func (tg *telegramBot) setGeolocationRequest(place string) error {
 	if err != nil {
 		return err
 	}
-	byteVaule, err := ioutil.ReadAll(resp.Body)
+	byteVaule, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("io.ReadAll(resp.Body) falied, err:%v", err)
+	}
 	if err := json.Unmarshal(byteVaule, &tg.forecast.g); err != nil {
 		return err
 	}
@@ -72,22 +51,23 @@ func (tg *telegramBot) setGeolocationRequest(place string) error {
 
 func (tg *telegramBot) forecastRequest(coordinate string) (string, error) {
 	if err := tg.weatherUrlValidator(coordinate); err != nil {
-		return "Some problem with forecast. Pleace enter /start again.", fmt.Errorf("validator forecast problem. weatherUrlValidator(coordinate) failed err: %v", err)
+		return "Some problem with forecast. Pleace enter /start again.",
+			fmt.Errorf("validator forecast problem. weatherUrlValidator(coordinate) failed err: %v", err)
 	}
 	url := fmt.Sprint(baseWeatherUrl, coordinate, middleWeatherUrL, tg.forecast.key, suffixWeatherUrl)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "Some problem with forecast. Pleace enter /start again.", fmt.Errorf("http.Get(url) failed, err: %v", err)
 	}
-	byteVaule, err := ioutil.ReadAll(resp.Body)
-	if err := json.Unmarshal(byteVaule, &tg.forecast.w); err != nil {
+	byteVaule, err := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(byteVaule, &tg.forecast.weatherForecast); err != nil {
 		return "Some problem with forecast. Pleace enter /start again.",
 			fmt.Errorf("json.Unmarshal(byteVaule, &tg.forecast.w) failed, err: %v", err)
 	}
 	var res string
 
-	if tg.forecast.w.ResponseCode == "200" {
-		for count, w := range tg.forecast.w.List {
+	if tg.forecast.weatherForecast.ResponseCode == "200" {
+		for count, w := range tg.forecast.weatherForecast.List {
 			if err != nil {
 				return "", err
 			}

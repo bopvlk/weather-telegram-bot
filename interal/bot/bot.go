@@ -2,14 +2,11 @@ package bot
 
 import (
 	"fmt"
-
 	"net/http"
-
 	"time"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/storage"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 

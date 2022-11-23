@@ -16,10 +16,9 @@ import (
 )
 
 type Storage struct {
-	userCollection   *mongo.Collection
-	eventsCollection *mongo.Collection
-	User             *User
-	Events           *[]Event
+	client *mongo.Client
+	User   *User
+	Events []Event
 }
 
 type User struct {
@@ -54,21 +53,13 @@ func NewStorage(cfg *models.Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	db := client.Database("forecast_users")
-	usersCollection := db.Collection("users")
-	eventsCollection := db.Collection("events")
 
 	return &Storage{
-		userCollection:   usersCollection,
-		eventsCollection: eventsCollection,
-		// User:             NewUser(),
-		// Event:            NewEvent(),
+		client: client,
 	}, nil
 }
 
 func (s *Storage) SaveUser(telegramUserID int64, password, city string) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	hashedPassword, err := middleware.JwtHashing(password, telegramUserID)
 	if err != nil {
 		return nil, fmt.Errorf("some problem with password hash. middleware.JwtHash(password, telegramUserID) in SaveUser(...) falied  %v", err)
@@ -80,7 +71,7 @@ func (s *Storage) SaveUser(telegramUserID int64, password, city string) (*User, 
 		City:           city,
 	}
 
-	_, err = s.userCollection.InsertOne(ctx, usr)
+	_, err = s.getUserColection().InsertOne(context.Background(), usr)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveUser(...) falied  %v", err)
 	}
@@ -93,15 +84,13 @@ func (s *Storage) SaveUser(telegramUserID int64, password, city string) (*User, 
 	return s.User, nil
 }
 
-func (s *Storage) SaveEvent(startTime, name string) (*[]Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (s *Storage) SaveEvent(startTime, name string) ([]Event, error) {
 	evn := Event{
 		OwnerID:   s.User.ID,
 		EventTime: startTime,
 		EventName: name,
 	}
-	_, err := s.eventsCollection.InsertOne(ctx, evn)
+	_, err := s.getEventsColection().InsertOne(context.Background(), evn)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveEvent(...) falied  %v", err)
 	}
@@ -114,18 +103,16 @@ func (s *Storage) SaveEvent(startTime, name string) (*[]Event, error) {
 }
 
 func (s *Storage) FindUser(telegramUserID int64) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	filterCursor, err := s.userCollection.Find(ctx, bson.M{"telegram_user_id": telegramUserID})
+	filterCursor, err := s.getUserColection().Find(context.Background(), bson.M{"telegram_user_id": telegramUserID})
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.Find(ctx, bson.M{\"telegram_user_id\": telegramUserID}) in the FindUser(...) falied  %v", err)
 	}
 	var users []User
-	if err = filterCursor.All(ctx, &users); err != nil {
+	if err = filterCursor.All(context.Background(), &users); err != nil {
 		return nil, err
 	}
 	if len(users) > 1 {
-		return nil, errors.New("users in database are more at 1 at the FindUser(....)")
+		return nil, errors.New("users in database are more then 1 at the FindUser(....)")
 	} else if len(users) == 0 {
 		return nil, nil
 	}
@@ -133,26 +120,24 @@ func (s *Storage) FindUser(telegramUserID int64) (*User, error) {
 	return s.User, nil
 }
 
-func (s *Storage) FindEvent() (*[]Event, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	filterCursor, err := s.eventsCollection.Find(ctx, bson.M{"owner_id": s.User.ID})
+func (s *Storage) FindEvent() ([]Event, error) {
+	filterCursor, err := s.getEventsColection().Find(context.Background(), bson.M{"owner_id": s.User.ID})
 	if err != nil {
 		return nil, fmt.Errorf("s.eventsCollection.Find(ctx, bson.M{\"owner_id\": s.event.OwnerID})) in the FindEvent(...) falied  %v", err)
 	}
 	var events []Event
 
-	if err = filterCursor.All(ctx, &events); err != nil {
+	if err = filterCursor.All(context.Background(), &events); err != nil {
 		return nil, fmt.Errorf("filterCursor.All(ctx, &s.event) in the FindEvent(...) falied  %v", err)
 	}
-	s.Events = &events
+	s.Events = events
 	return s.Events, nil
 }
 
-func NewUser() *User {
-	return &User{}
+func (s *Storage) getUserColection() *mongo.Collection {
+	return s.client.Database("forecast_users").Collection("users")
 }
 
-func NewEvent() *Event {
-	return &Event{}
+func (s *Storage) getEventsColection() *mongo.Collection {
+	return s.client.Database("forecast_users").Collection("users")
 }

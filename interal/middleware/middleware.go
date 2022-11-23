@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type claims struct {
@@ -29,9 +29,12 @@ func JwtHashing(password string, telegramUserID int64) (string, error) {
 
 func GetUserID(token string) (int64, error) {
 	claims := &claims{}
-	jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SECRET_KEY")), nil
 	})
+	if err != nil {
+		return 0, fmt.Errorf("jwt.ParseWithClaims failed err: %v", err)
+	}
 	return claims.telegramUserID, nil
 }
 

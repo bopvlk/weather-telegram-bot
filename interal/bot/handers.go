@@ -26,7 +26,7 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 				return err
 			}
 		}
-	case markerWriteTime == true:
+	case markerWriteTime:
 		if timeValidator(message.Text) {
 			markerWriteTime = false
 			toDBEventTime = message.Text
@@ -38,7 +38,7 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 				return err
 			}
 		}
-	case markerScheduleName == true:
+	case markerScheduleName:
 		markerScheduleName = false
 		if _, err := tg.storage.SaveEvent(toDBEventTime, message.Text); err != nil {
 			return err
@@ -55,8 +55,10 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 			return nil
 		}
 
-		for _, e := range *tg.storage.Events {
-			gocron.Every(1).Day().At(e.EventTime).Do(scheduleRun)
+		for _, e := range tg.storage.Events {
+			if err := gocron.Every(1).Day().At(e.EventTime).Do(scheduleRun); err != nil {
+				return err
+			}
 		}
 
 		<-gocron.Start()
@@ -64,12 +66,12 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 		if err := tg.printMessage(message, "Now you will get notifications with forecast"); err != nil {
 			return err
 		}
-	case markerFindCity == true:
+	case markerFindCity:
 		markerFindCity = false
 		if err := tg.printMessage(message, fromBotSelectPlace); err != nil {
 			return err
 		}
-	case markerWritePassword == true:
+	case markerWritePassword:
 		markerWritePassword = false
 		var err error
 		toDBPasswordHash, err = middleware.JwtHashing(message.Text, message.From.ID)
@@ -122,9 +124,11 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 		if err != nil {
 			return err
 		}
-		if markerSaveCityMarker == true {
+		if markerSaveCityMarker {
 			markerSaveCityMarker = false
-			tg.storage.SaveUser(callback.From.ID, toDBPasswordHash, clbck.Text)
+			if _, err := tg.storage.SaveUser(callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
+				return err
+			}
 			toDBPasswordHash = ""
 			if err := tg.printMessage(callback.Message, fromBotULogged); err != nil {
 				return err
