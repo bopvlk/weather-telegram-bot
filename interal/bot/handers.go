@@ -17,7 +17,7 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 	defer cancel()
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.FindUserPerTGId(ctx, message.From.ID)
+		user, err := tg.storage.FindUsersPerTGId(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 			return err
 		}
 	case clbck.Text == keyJustLoggedYES:
-		user, err := tg.storage.FindUserPerTGId(ctx, callback.From.ID)
+		user, err := tg.storage.FindUsersPerTGId(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}

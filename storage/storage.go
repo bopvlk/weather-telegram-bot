@@ -50,7 +50,7 @@ func (s *Storage) SaveUser(ctx context.Context, telegramUserID int64, password, 
 	return id, nil
 }
 
-func (s *Storage) FindUserPerTGId(ctx context.Context, telegramUserID int64) (*User, error) {
+func (s *Storage) FindUsersPerTGId(ctx context.Context, telegramUserID int64) (*User, error) {
 	filterCursor, err := s.getUserColection().Find(context.Background(), bson.M{"telegram_user_id": telegramUserID})
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.Find(ctx, bson.M{\"telegram_user_id\": telegramUserID}) in the FindUser(...) falied  %v", err)
