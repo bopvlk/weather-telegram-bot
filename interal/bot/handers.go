@@ -1,9 +1,11 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/middleware"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -11,9 +13,11 @@ import (
 )
 
 func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.FindUser(message.From.ID)
+		user, err := tg.storage.FindUserPerTGId(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -40,7 +44,7 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 		}
 	case markerScheduleName:
 		markerScheduleName = false
-		if _, err := tg.storage.SaveEvent(toDBEventTime, message.Text); err != nil {
+		if _, err := tg.storage.SaveEvent(ctx, toDBEventTime, message.Text); err != nil {
 			return err
 		}
 
@@ -90,6 +94,9 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 }
 
 func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	clbck := tgbotapi.NewCallback(callback.ID, callback.Data)
 	if _, err := tg.bot.Request(clbck); err != nil {
 		return fmt.Errorf("send request failed: %v", err)
@@ -104,7 +111,7 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 			return err
 		}
 	case clbck.Text == keyJustLoggedYES:
-		user, err := tg.storage.FindUser(callback.From.ID)
+		user, err := tg.storage.FindUserPerTGId(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}
@@ -126,7 +133,7 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 		}
 		if markerSaveCityMarker {
 			markerSaveCityMarker = false
-			if _, err := tg.storage.SaveUser(callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
+			if _, err := tg.storage.SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
 				return err
 			}
 			toDBPasswordHash = ""
