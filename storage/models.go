@@ -5,7 +5,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Store interface {
+	User() 
+}
+
 type Storage struct {
+	store  Store
 	client *mongo.Client
 	User   *User
 	Events []Event

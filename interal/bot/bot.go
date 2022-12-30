@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -31,14 +32,18 @@ func (tg *telegramBot) Running() {
 }
 
 func (tg *telegramBot) eventUpdates(update tgbotapi.Update) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	l := tg.c.NewLogger()
+
 	switch {
 	case update.CallbackQuery != nil:
-		if err := tg.onCallbackQuery(update.CallbackQuery); err != nil {
+		if err := tg.onCallbackQuery(ctx, update.CallbackQuery); err != nil {
 			l.Errorf("some error with callback, err: %v", err)
 		}
 	case update.Message != nil:
-		if err := tg.onCommandCreate(update.Message); err != nil {
+		if err := tg.onCommandCreate(ctx, update.Message); err != nil {
 			l.Errorf("some error with command, err %v", err)
 		}
 	default:
@@ -47,6 +52,9 @@ func (tg *telegramBot) eventUpdates(update tgbotapi.Update) {
 }
 
 func New(c Container) (*telegramBot, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	l := c.NewLogger()
 	cfg := c.NewConfig()
 
@@ -55,7 +63,7 @@ func New(c Container) (*telegramBot, error) {
 		return nil, err
 	}
 
-	storage, err := storage.NewStorage(cfg)
+	storage, err := storage.NewStorage(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

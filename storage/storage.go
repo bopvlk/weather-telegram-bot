@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,22 +12,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func NewStorage(cfg *models.Config) (*Storage, error) {
+func NewStorage(ctx context.Context, cfg *models.Config) (*Storage, error) {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
-		ApplyURI(fmt.Sprintf("mongodb+srv://%s:%s@cluster0.f4rrgdp.mongodb.net/?retryWrites=true&w=majority", cfg.DBUser, cfg.DBPassword)).
+		ApplyURI(fmt.Sprintf("mongodb://%s:%s@mongodb", cfg.DBUser, cfg.DBPassword)).
 		SetServerAPIOptions(serverAPIOptions)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	err = client.Ping(ctx, readpref.Primary())
-	if err != nil {
+	if err = client.Ping(ctx, readpref.Primary()); err != nil {
 		return nil, err
 	}
 
@@ -43,20 +38,20 @@ func (s *Storage) SaveUser(ctx context.Context, telegramUserID int64, password, 
 		PasswordHash:   password,
 		City:           city,
 	}
-	id, err := s.getUserColection().InsertOne(context.Background(), usr)
+	id, err := s.getUserColection().InsertOne(ctx, usr)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveUser(...) falied  %v", err)
 	}
 	return id, nil
 }
 
-func (s *Storage) FindUsersPerTGId(ctx context.Context, telegramUserID int64) (*User, error) {
-	filterCursor, err := s.getUserColection().Find(context.Background(), bson.M{"telegram_user_id": telegramUserID})
+func (s *Storage) FindUsersPerTelegramId(ctx context.Context, telegramUserID int64) (*User, error) {
+	filterCursor, err := s.getUserColection().Find(ctx, bson.M{"telegram_user_id": telegramUserID})
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.Find(ctx, bson.M{\"telegram_user_id\": telegramUserID}) in the FindUser(...) falied  %v", err)
 	}
 	var users []User
-	if err = filterCursor.All(context.Background(), &users); err != nil {
+	if err = filterCursor.All(ctx, &users); err != nil {
 		return nil, err
 	}
 	if len(users) > 1 {
@@ -74,7 +69,7 @@ func (s *Storage) SaveEvent(ctx context.Context, startTime, name string) (*mongo
 		EventTime: startTime,
 		EventName: name,
 	}
-	id, err := s.getEventsColection().InsertOne(context.Background(), evn)
+	id, err := s.getEventsColection().InsertOne(ctx, evn)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveEvent(...) falied  %v", err)
 	}
@@ -82,13 +77,13 @@ func (s *Storage) SaveEvent(ctx context.Context, startTime, name string) (*mongo
 }
 
 func (s *Storage) FindEvents(ctx context.Context) ([]Event, error) {
-	filterCursor, err := s.getEventsColection().Find(context.Background(), bson.M{"owner_id": s.User.ID})
+	filterCursor, err := s.getEventsColection().Find(ctx, bson.M{"owner_id": s.User.ID})
 	if err != nil {
 		return nil, fmt.Errorf("s.eventsCollection.Find(ctx, bson.M{\"owner_id\": s.event.OwnerID})) in the FindEvent(...) falied  %v", err)
 	}
 	var events []Event
 
-	if err = filterCursor.All(context.Background(), &events); err != nil {
+	if err = filterCursor.All(ctx, &events); err != nil {
 		return nil, fmt.Errorf("filterCursor.All(ctx, &s.event) in the FindEvent(...) falied  %v", err)
 	}
 	s.Events = events

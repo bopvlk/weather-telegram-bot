@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/middleware"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jasonlvhit/gocron"
 )
 
-func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Message) error {
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.FindUsersPerTGId(ctx, message.From.ID)
+		user, err := tg.storage.FindUsersPerTelegramId(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -31,7 +28,7 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 			}
 		}
 	case markerWriteTime:
-		if timeValidator(message.Text) {
+		if timeChecker(message.Text) {
 			markerWriteTime = false
 			toDBEventTime = message.Text
 			if err := tg.printMessage(message, fromBotScheduleName); err != nil {
@@ -93,25 +90,22 @@ func (tg *telegramBot) onCommandCreate(message *tgbotapi.Message) error {
 	return nil
 }
 
-func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.CallbackQuery) error {
 	clbck := tgbotapi.NewCallback(callback.ID, callback.Data)
 	if _, err := tg.bot.Request(clbck); err != nil {
 		return fmt.Errorf("send request failed: %v", err)
 	}
-	switch {
-	case clbck.Text == keyStartCheckOut:
+	switch clbck.Text {
+	case keyStartCheckOut:
 		if err := tg.printMessage(callback.Message, fromBotWriteCity); err != nil {
 			return err
 		}
-	case clbck.Text == keyStartAuthorization:
+	case keyStartAuthorization:
 		if err := tg.printMessage(callback.Message, fromBotPasword); err != nil {
 			return err
 		}
-	case clbck.Text == keyJustLoggedYES:
-		user, err := tg.storage.FindUsersPerTGId(ctx, callback.From.ID)
+	case keyJustLoggedYES:
+		user, err := tg.storage.FindUsersPerTelegramId(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}
@@ -122,11 +116,12 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 		if err := tg.printMessage(callback.Message, forecast); err != nil {
 			return err
 		}
-	case clbck.Text == keyJustLoggedSchedule:
+	case keyJustLoggedSchedule:
 		if err := tg.printMessage(callback.Message, fromBotWhatTime); err != nil {
 			return err
 		}
-	case clbck.Text[0] == 'l' && clbck.Text[1] == 'a' && clbck.Text[2] == 't':
+	}
+	if coordinateChecker(clbck.Text) {
 		forecast, err := tg.forecastRequest(clbck.Text)
 		if err != nil {
 			return err
@@ -149,7 +144,7 @@ func (tg *telegramBot) onCallbackQuery(callback *tgbotapi.CallbackQuery) error {
 	return nil
 }
 
-func timeValidator(t string) bool {
+func timeChecker(t string) bool {
 	hourStr, minuteStr, found := strings.Cut(t, ":")
 	if !found {
 		return false
@@ -169,4 +164,11 @@ func timeValidator(t string) bool {
 		return false
 	}
 	return true
+}
+
+func coordinateChecker(coordinate string) bool {
+	if coordinate[0] == 'l' && coordinate[1] == 'a' && coordinate[2] == 't' {
+		return true
+	}
+	return false
 }

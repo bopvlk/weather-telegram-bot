@@ -1,0 +1,19 @@
+version: '3.8'
+   
+services:
+  runbot:
+    build: ./
+    command: ./runbot
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+
+  mongodb:
+    restart: always
+    image: mongo:focal
+    env_file:
+      - .env      
+    ports:
+        - 2121:27017
+

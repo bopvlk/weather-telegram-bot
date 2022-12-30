@@ -1,11 +1,11 @@
-FROM golang:1.19.1-alpine
+FROM golang:1.20rc1-alpine3.17
 
-WORKDIR /bot
+WORKDIR /usr/bot
 
-COPY . .
+COPY ./ ./
 
 RUN go mod download
 
-RUN go build -o /runbot ./cmd/telegrambot/
+RUN go build -o runbot ./cmd/telegrambot/
 
-CMD [ "/runbot" ]
+CMD [ "./runbot" ]

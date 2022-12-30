@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
@@ -66,7 +67,7 @@ func (tg *telegramBot) forecastRequest(coordinate string) (string, error) {
 	}
 	var res string
 
-	if tg.forecast.weatherForecast.ResponseCode == "200" {
+	if tg.forecast.weatherForecast.ResponseCode == strconv.Itoa(http.StatusOK) {
 		for count, w := range tg.forecast.weatherForecast.List {
 			if err != nil {
 				return "", err

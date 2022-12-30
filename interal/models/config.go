@@ -6,4 +6,5 @@ type Config struct {
 	ServiceName   string `env:"SERVICE_NAME" envDefault:"BOT"`
 	DBUser        string `env:"MONGO_DB_USER,required"`
 	DBPassword    string `env:"MONGO_DB_PASSWORD,required"`
+	
 }

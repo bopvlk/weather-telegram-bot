@@ -37,7 +37,7 @@ type LogrusLogger struct {
 	entry  *logrus.Entry
 }
 
-func NewLogger(cfg *models.Config) (*LogrusLogger, error) {
+func SetUpLogger(cfg *models.Config) (*LogrusLogger, error) {
 	level, err := logrus.ParseLevel("trace")
 	if err != nil {
 		return nil, fmt.Errorf("can't parse log level: %w", err)

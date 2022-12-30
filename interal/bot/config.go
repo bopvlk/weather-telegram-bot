@@ -9,15 +9,15 @@ import (
 )
 
 // load configuration information of bot
-func NewConfig() (*models.Config, error) {
+func SetUpConfig() (*models.Config, error) {
 	config := &models.Config{}
 
 	if err := godotenv.Load(".env"); err != nil {
-		return nil, fmt.Errorf("godotenv.Load() failed. Error:'%v'\n.", err)
+		return nil, fmt.Errorf("godotenv.load failed. error:'%v'", err)
 	}
 
 	if err := env.Parse(config); err != nil {
-		return nil, fmt.Errorf("env.Parse() in bot.config failed. Error:'%v'\n. ", err)
+		return nil, fmt.Errorf("env.Parse() in bot.config failed. Error:'%v'", err)
 	}
 
 	return config, nil
