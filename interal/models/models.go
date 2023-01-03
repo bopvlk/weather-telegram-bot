@@ -27,3 +27,11 @@ type ForecastResponce struct {
 		SkyWeathers []SkyWeather `json:"weather"`
 	} `json:"list"`
 }
+
+type Pages struct {
+	MarkerFindCity       bool
+	MarkerWritePassword  bool
+	MarkerSaveCityMarker bool
+	MarkerWriteTime      bool
+	MarkerScheduleName   bool
+}

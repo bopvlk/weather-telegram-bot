@@ -17,11 +17,12 @@ const (
 )
 
 type telegramBot struct {
-	c        Container
-	bot      *tgbotapi.BotAPI
-	updates  tgbotapi.UpdatesChannel
-	forecast *forecast
-	storage  *storage.Storage
+	c          Container
+	bot        *tgbotapi.BotAPI
+	updates    tgbotapi.UpdatesChannel
+	forecast   *forecast
+	storage    *storage.Storage
+	pageMarker map[int64]models.Pages
 }
 
 func (tg *telegramBot) Running() {
@@ -69,10 +70,11 @@ func New(c Container) (*telegramBot, error) {
 	}
 
 	t := &telegramBot{
-		c:        c,
-		bot:      bot,
-		forecast: newWeather(cfg),
-		storage:  storage,
+		c:          c,
+		bot:        bot,
+		forecast:   newWeather(cfg),
+		storage:    storage,
+		pageMarker: make(map[int64]models.Pages),
 	}
 
 	botUpdate := tgbotapi.NewUpdate(updateOffset)

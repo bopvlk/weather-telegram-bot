@@ -6,7 +6,7 @@ import (
 )
 
 type Store interface {
-	User() 
+	User()
 }
 
 type Storage struct {

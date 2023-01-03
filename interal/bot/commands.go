@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -22,12 +23,6 @@ const (
 )
 
 var (
-	markerFindCity       = false
-	markerWritePassword  = false
-	markerSaveCityMarker = false
-	markerWriteTime      = false
-	markerScheduleName   = false
-
 	toDBPasswordHash = ""
 	toDBEventTime    = ""
 )
@@ -35,7 +30,6 @@ var (
 func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, text)
 	switch msg.Text {
-
 	case fromBotStartIfNoLogged:
 		msg.ReplyMarkup = keyboardStarted
 	case fromBotStartIfLogged:
@@ -46,21 +40,20 @@ func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) erro
 		}
 		if len(tg.forecast.g) == 0 {
 			msg.Text = fromBotNotFoundCity
-			markerFindCity = true
+			tg.pageMarker[message.From.ID] = models.Pages{MarkerFindCity: true}
 		} else {
 			msg.ReplyMarkup = tg.citySelection()
 		}
 	case fromBotWriteCity:
-		markerFindCity = true
+		tg.pageMarker[message.From.ID] = models.Pages{MarkerFindCity: true}
 	case fromBotPasword:
-		markerWritePassword = true
+		tg.pageMarker[message.From.ID] = models.Pages{MarkerWritePassword: true}
 	case fromBotWitchCity:
-		markerSaveCityMarker = true
-		markerFindCity = true
+		tg.pageMarker[message.From.ID] = models.Pages{MarkerSaveCityMarker: true, MarkerFindCity: true}
 	case fromBotWhatTime:
-		markerWriteTime = true
+		tg.pageMarker[message.From.ID] = models.Pages{MarkerWriteTime: true}
 	case fromBotScheduleName:
-		markerScheduleName = true
+		tg.pageMarker[message.From.ID] = models.Pages{MarkerScheduleName: true}
 	}
 	if err := tg.sendMessage(msg); err != nil {
 		return err

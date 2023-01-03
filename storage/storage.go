@@ -97,3 +97,5 @@ func (s *Storage) getUserColection() *mongo.Collection {
 func (s *Storage) getEventsColection() *mongo.Collection {
 	return s.client.Database("forecast_users").Collection("users")
 }
+
+

@@ -27,20 +27,20 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 				return err
 			}
 		}
-	case markerWriteTime:
+	case tg.pageMarker[message.From.ID].MarkerWriteTime:
 		if err := timeChecker(message.Text); err != nil {
 			if err := tg.printMessage(message, fromBotWrongFormatTime); err != nil {
 				return err
 			} else {
-				markerWriteTime = false
+				delete(tg.pageMarker, message.From.ID)
 				toDBEventTime = message.Text
 				if err := tg.printMessage(message, fromBotScheduleName); err != nil {
 					return err
 				}
 			}
 		}
-	case markerScheduleName:
-		markerScheduleName = false
+	case tg.pageMarker[message.From.ID].MarkerScheduleName:
+		delete(tg.pageMarker, message.From.ID)
 		if _, err := tg.storage.SaveEvent(ctx, toDBEventTime, message.Text); err != nil {
 			return err
 		}
@@ -67,13 +67,13 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 		if err := tg.printMessage(message, "Now you will get notifications with forecast"); err != nil {
 			return err
 		}
-	case markerFindCity:
-		markerFindCity = false
+	case tg.pageMarker[message.From.ID].MarkerFindCity:
+		delete(tg.pageMarker, message.From.ID)
 		if err := tg.printMessage(message, fromBotSelectPlace); err != nil {
 			return err
 		}
-	case markerWritePassword:
-		markerWritePassword = false
+	case tg.pageMarker[message.From.ID].MarkerWritePassword:
+		delete(tg.pageMarker, message.From.ID)
 		var err error
 		toDBPasswordHash, err = middleware.JwtHashing(message.Text, message.From.ID)
 		if err != nil {
@@ -126,8 +126,8 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 		if err != nil {
 			return err
 		}
-		if markerSaveCityMarker {
-			markerSaveCityMarker = false
+		if tg.pageMarker[callback.From.ID].MarkerSaveCityMarker {
+			delete(tg.pageMarker, callback.From.ID)
 			if _, err := tg.storage.SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
 				return err
 			}
