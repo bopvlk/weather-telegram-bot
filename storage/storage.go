@@ -45,7 +45,7 @@ func (s *Storage) SaveUser(ctx context.Context, telegramUserID int64, password, 
 	return id, nil
 }
 
-func (s *Storage) FindUsersPerTelegramId(ctx context.Context, telegramUserID int64) (*User, error) {
+func (s *Storage) FindOnerUser(ctx context.Context, telegramUserID int64) (*User, error) {
 	filterCursor, err := s.getUserColection().Find(ctx, bson.M{"telegram_user_id": telegramUserID})
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.Find(ctx, bson.M{\"telegram_user_id\": telegramUserID}) in the FindUser(...) falied  %v", err)
@@ -97,5 +97,3 @@ func (s *Storage) getUserColection() *mongo.Collection {
 func (s *Storage) getEventsColection() *mongo.Collection {
 	return s.client.Database("forecast_users").Collection("users")
 }
-
-

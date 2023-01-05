@@ -14,7 +14,7 @@ import (
 func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Message) error {
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.FindUsersPerTelegramId(ctx, message.From.ID)
+		user, err := tg.storage.FindOnerUser(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,6 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 				return err
 			}
 		}
-
 		<-gocron.Start()
 
 		if err := tg.printMessage(message, "Now you will get notifications with forecast"); err != nil {
@@ -105,7 +104,7 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 			return err
 		}
 	case keyJustLoggedYES:
-		user, err := tg.storage.FindUsersPerTelegramId(ctx, callback.From.ID)
+		user, err := tg.storage.FindOnerUser(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}
