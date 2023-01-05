@@ -7,14 +7,16 @@ import (
 	"strings"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/middleware"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jasonlvhit/gocron"
 )
 
 func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Message) error {
+	var user *models.User
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.FindOnerUser(ctx, message.From.ID)
+		user, err := tg.db.Storage.FindOneUser(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -41,12 +43,12 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 		}
 	case tg.pageMarker[message.From.ID].MarkerScheduleName:
 		delete(tg.pageMarker, message.From.ID)
-		if _, err := tg.storage.SaveEvent(ctx, toDBEventTime, message.Text); err != nil {
+		if _, err := tg.db.Storage.SaveEvent(ctx, toDBEventTime, message.Text); err != nil {
 			return err
 		}
 
 		scheduleRun := func() error {
-			forecast, err := tg.forecastRequest(tg.storage.User.City)
+			forecast, err := tg.forecastRequest(user.City)
 			if err != nil {
 				return err
 			}
@@ -56,7 +58,11 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 			return nil
 		}
 
-		for _, e := range tg.storage.Events {
+		events, err := tg.db.Storage.FindEvents(ctx)
+		if err != nil {
+			return err
+		}
+		for _, e := range events {
 			if err := gocron.Every(1).Day().At(e.EventTime).Do(scheduleRun); err != nil {
 				return err
 			}
@@ -104,7 +110,7 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 			return err
 		}
 	case keyJustLoggedYES:
-		user, err := tg.storage.FindOnerUser(ctx, callback.From.ID)
+		user, err := tg.db.Storage.FindOneUser(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}
@@ -127,7 +133,7 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 		}
 		if tg.pageMarker[callback.From.ID].MarkerSaveCityMarker {
 			delete(tg.pageMarker, callback.From.ID)
-			if _, err := tg.storage.SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
+			if _, err := tg.db.Storage.SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
 				return err
 			}
 			toDBPasswordHash = ""
