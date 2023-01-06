@@ -21,7 +21,7 @@ type telegramBot struct {
 	bot        *tgbotapi.BotAPI
 	updates    tgbotapi.UpdatesChannel
 	forecast   *forecast
-	db         *storage.DB
+	storage    storage.Storage
 	pageMarker map[int64]models.Pages
 }
 
@@ -64,7 +64,6 @@ func New(c Container) (*telegramBot, error) {
 		return nil, err
 	}
 
-	// var storage storage.Storage
 	storage, err := storage.NewStorage(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -74,7 +73,7 @@ func New(c Container) (*telegramBot, error) {
 		c:          c,
 		bot:        bot,
 		forecast:   newWeather(cfg),
-		db:         storage,
+		storage:    storage,
 		pageMarker: make(map[int64]models.Pages),
 	}
 

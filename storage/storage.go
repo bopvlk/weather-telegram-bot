@@ -10,19 +10,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type DB struct {
-	client  *mongo.Client
-	Storage Storage
-}
+const (
+	database         = "forecast_users"
+	userCollection   = "users"
+	eventsCollection = "events"
+)
 
 type Storage interface {
-	SaveEvent(ctx context.Context, startTime, name string) (*mongo.InsertOneResult, error)
-	FindEvents(ctx context.Context) ([]models.Event, error)
-	SaveUser(ctx context.Context, telegramUserID int64, password, city string) (*mongo.InsertOneResult, error)
-	FindOneUser(ctx context.Context, telegramUserID int64) (*models.User, error)
+	UserRepository() *UserRepository
+	EventRepository() *EventRepository
 }
 
-func NewStorage(ctx context.Context, cfg *models.Config) (*DB, error) {
+func NewStorage(ctx context.Context, cfg *models.Config) (Storage, error) {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
 		ApplyURI(fmt.Sprintf("mongodb://%s:%s@mongodb", cfg.DBUser, cfg.DBPassword)).
@@ -38,8 +37,5 @@ func NewStorage(ctx context.Context, cfg *models.Config) (*DB, error) {
 	}
 
 	var storage Storage
-	return &DB{
-		client:  client,
-		Storage: storage,
-	}, nil
+	return storage, nil
 }
