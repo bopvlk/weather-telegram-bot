@@ -10,17 +10,7 @@ import (
 )
 
 type UserRepository struct {
-	client *mongo.Client
-}
-
-func NewUserRepository(client *mongo.Client) *UserRepository {
-	return &UserRepository{
-		client: client,
-	}
-}
-
-func (ur *UserRepository) getColection() *mongo.Collection {
-	return ur.client.Database(database).Collection(userCollection)
+	userCollections *mongo.Collection
 }
 
 func (ur *UserRepository) SaveUser(ctx context.Context, telegramUserID int64, password, city string) (*mongo.InsertOneResult, error) {
@@ -30,7 +20,7 @@ func (ur *UserRepository) SaveUser(ctx context.Context, telegramUserID int64, pa
 		City:           city,
 	}
 
-	id, err := ur.getColection().InsertOne(ctx, usr)
+	id, err := ur.userCollections.InsertOne(ctx, usr)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveUser(...) falied  %v", err)
 	}
@@ -39,8 +29,8 @@ func (ur *UserRepository) SaveUser(ctx context.Context, telegramUserID int64, pa
 
 func (ur *UserRepository) FindUser(ctx context.Context, telegramUserID int64) (*models.User, error) {
 	var user models.User
-	filter := bson.D{{Key: "telegram_user_id", Value: telegramUserID}}
-	if err := ur.getColection().FindOne(ctx, filter).Decode(&user); err != nil {
+	filter := bson.M{"telegram_user_id": telegramUserID}
+	if err := ur.userCollections.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}

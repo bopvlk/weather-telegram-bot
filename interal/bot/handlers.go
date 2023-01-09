@@ -14,7 +14,7 @@ import (
 func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Message) error {
 	switch {
 	case message.Text == "/start":
-		user, err := tg.storage.NewUserRepository().FindUser(ctx, message.From.ID)
+		user, err := tg.store.UserRepository().FindUser(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
@@ -27,28 +27,27 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 				return err
 			}
 		}
-	case tg.pageMarker[message.From.ID].MarkerWriteTime:
+	case tg.pageMarker[message.Chat.ID].MarkerWriteTime:
 		if err := timeChecker(message.Text); err != nil {
 			if err := tg.printMessage(message, fromBotWrongFormatTime); err != nil {
 				return err
 			} else {
-				delete(tg.pageMarker, message.From.ID)
+				delete(tg.pageMarker, message.Chat.ID)
 				toDBEventTime = message.Text
 				if err := tg.printMessage(message, fromBotScheduleName); err != nil {
 					return err
 				}
 			}
 		}
-	case tg.pageMarker[message.From.ID].MarkerScheduleName:
-		delete(tg.pageMarker, message.From.ID)
-		user, err := tg.storage.NewUserRepository().FindUser(ctx, message.From.ID)
+	case tg.pageMarker[message.Chat.ID].MarkerScheduleName:
+		delete(tg.pageMarker, message.Chat.ID)
+		user, err := tg.store.UserRepository().FindUser(ctx, message.From.ID)
 		if err != nil {
 			return err
 		}
-		if _, err := tg.storage.NewEventRepository().SaveEvent(ctx, user.ID, toDBEventTime, message.Text); err != nil {
+		if _, err := tg.store.EventRepository().SaveEvent(ctx, user.ID, toDBEventTime, message.Text); err != nil {
 			return err
 		}
-
 		scheduleRun := func() error {
 			forecast, err := tg.forecastRequest(user.City)
 			if err != nil {
@@ -59,8 +58,7 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 			}
 			return nil
 		}
-
-		events, err := tg.storage.NewEventRepository().FindEvents(ctx, user.ID)
+		events, err := tg.store.EventRepository().FindEvents(ctx, user.ID)
 		if err != nil {
 			return err
 		}
@@ -70,17 +68,17 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 			}
 		}
 		<-gocron.Start()
-
 		if err := tg.printMessage(message, "Now you will get notifications with forecast"); err != nil {
 			return err
 		}
-	case tg.pageMarker[message.From.ID].MarkerFindCity:
-		delete(tg.pageMarker, message.From.ID)
+	case tg.pageMarker[message.Chat.ID].MarkerFindCity:
+
+		delete(tg.pageMarker, message.Chat.ID)
 		if err := tg.printMessage(message, fromBotSelectPlace); err != nil {
 			return err
 		}
-	case tg.pageMarker[message.From.ID].MarkerWritePassword:
-		delete(tg.pageMarker, message.From.ID)
+	case tg.pageMarker[message.Chat.ID].MarkerWritePassword:
+		delete(tg.pageMarker, message.Chat.ID)
 		var err error
 		toDBPasswordHash, err = middleware.JwtHashing(message.Text, message.From.ID)
 		if err != nil {
@@ -112,7 +110,7 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 			return err
 		}
 	case keyJustLoggedYES:
-		user, err := tg.storage.NewUserRepository().FindUser(ctx, callback.From.ID)
+		user, err := tg.store.UserRepository().FindUser(ctx, callback.From.ID)
 		if err != nil {
 			return err
 		}
@@ -133,9 +131,9 @@ func (tg *telegramBot) onCallbackQuery(ctx context.Context, callback *tgbotapi.C
 		if err != nil {
 			return err
 		}
-		if tg.pageMarker[callback.From.ID].MarkerSaveCityMarker {
-			delete(tg.pageMarker, callback.From.ID)
-			if _, err := tg.storage.NewUserRepository().SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
+		if tg.pageMarker[callback.Message.Chat.ID].MarkerSaveCityMarker {
+			delete(tg.pageMarker, callback.Message.From.ID)
+			if _, err := tg.store.UserRepository().SaveUser(ctx, callback.From.ID, toDBPasswordHash, clbck.Text); err != nil {
 				return err
 			}
 			toDBPasswordHash = ""

@@ -16,26 +16,41 @@ const (
 	eventsCollection = "events"
 )
 
-type Storage interface {
+type client struct {
+	c *mongo.Client
+}
+
+type Store interface {
 	UserRepository() *UserRepository
 	EventRepository() *EventRepository
 }
 
-func NewStorage(ctx context.Context, cfg *models.Config) (Storage, error) {
+func NewStorage(ctx context.Context, cfg *models.Config) (Store, error) {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
 		ApplyURI(fmt.Sprintf("mongodb://%s:%s@mongodb", cfg.DBUser, cfg.DBPassword)).
 		SetServerAPIOptions(serverAPIOptions)
 
-	client, err := mongo.Connect(ctx, clientOptions)
+	c, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = client.Ping(ctx, readpref.Primary()); err != nil {
+	if err = c.Ping(ctx, readpref.Primary()); err != nil {
 		return nil, err
 	}
 
-	var storage Storage
-	return storage, nil
+	return &client{c: c}, nil
+}
+
+func (c *client) UserRepository() *UserRepository {
+	return &UserRepository{
+		userCollections: c.c.Database(database).Collection(userCollection),
+	}
+}
+
+func (c *client) EventRepository() *EventRepository {
+	return &EventRepository{
+		eventCollections: c.c.Database(database).Collection(eventsCollection),
+	}
 }

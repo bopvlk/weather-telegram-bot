@@ -11,27 +11,16 @@ import (
 )
 
 type EventRepository struct {
-	client *mongo.Client
-}
-
-func (er *EventRepository) getEventsColection() *mongo.Collection {
-	return er.client.Database(database).Collection(eventsCollection)
-}
-
-func NewEventRepository(client *mongo.Client) *EventRepository {
-	return &EventRepository{
-		client: client,
-	}
+	eventCollections *mongo.Collection
 }
 
 func (er *EventRepository) SaveEvent(ctx context.Context, userID primitive.ObjectID, startTime, name string) (*mongo.InsertOneResult, error) {
-
 	event := models.Event{
 		OwnerID:   userID,
 		EventTime: startTime,
 		EventName: name,
 	}
-	id, err := er.getEventsColection().InsertOne(ctx, event)
+	id, err := er.eventCollections.InsertOne(ctx, event)
 	if err != nil {
 		return nil, fmt.Errorf("s.userCollection.InsertOne(ctx, usr) in SaveEvent(...) falied  %v", err)
 	}
@@ -39,7 +28,7 @@ func (er *EventRepository) SaveEvent(ctx context.Context, userID primitive.Objec
 }
 
 func (er *EventRepository) FindEvents(ctx context.Context, userID primitive.ObjectID) ([]models.Event, error) {
-	filterCursor, err := er.getEventsColection().Find(ctx, bson.M{"owner_id": userID})
+	filterCursor, err := er.eventCollections.Find(ctx, bson.M{"owner_id": userID})
 	if err != nil {
 		return nil, fmt.Errorf("s.eventsCollection.Find(ctx, bson.M{\"owner_id\": s.event.OwnerID})) in the FindEvent(...) falied  %v", err)
 	}

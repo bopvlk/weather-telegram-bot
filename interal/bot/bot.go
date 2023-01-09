@@ -17,11 +17,12 @@ const (
 )
 
 type telegramBot struct {
-	c          Container
-	bot        *tgbotapi.BotAPI
-	updates    tgbotapi.UpdatesChannel
-	forecast   *forecast
-	storage    storage.Storage
+	container Container
+	bot       *tgbotapi.BotAPI
+	updates   tgbotapi.UpdatesChannel
+	forecast  *forecast
+
+	store      storage.Store
 	pageMarker map[int64]models.Pages
 }
 
@@ -36,7 +37,7 @@ func (tg *telegramBot) eventUpdates(update tgbotapi.Update) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	l := tg.c.NewLogger()
+	l := tg.container.NewLogger()
 
 	switch {
 	case update.CallbackQuery != nil:
@@ -52,28 +53,28 @@ func (tg *telegramBot) eventUpdates(update tgbotapi.Update) {
 	}
 }
 
-func New(c Container) (*telegramBot, error) {
+func New(container Container) (*telegramBot, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	l := c.NewLogger()
-	cfg := c.NewConfig()
+	l := container.NewLogger()
+	cfg := container.NewConfig()
 
 	bot, err := newBot(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := storage.NewStorage(ctx, cfg)
+	store, err := storage.NewStorage(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	t := &telegramBot{
-		c:          c,
+		container:  container,
 		bot:        bot,
 		forecast:   newWeather(cfg),
-		storage:    storage,
+		store:      store,
 		pageMarker: make(map[int64]models.Pages),
 	}
 

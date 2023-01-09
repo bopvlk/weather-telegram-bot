@@ -40,20 +40,21 @@ func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) erro
 		}
 		if len(tg.forecast.g) == 0 {
 			msg.Text = fromBotNotFoundCity
-			tg.pageMarker[message.From.ID] = models.Pages{MarkerFindCity: true}
+			tg.pageMarker[message.Chat.ID] = models.Pages{MarkerFindCity: true}
 		} else {
 			msg.ReplyMarkup = tg.citySelection()
 		}
 	case fromBotWriteCity:
-		tg.pageMarker[message.From.ID] = models.Pages{MarkerFindCity: true}
+		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerFindCity: true}
+		fmt.Printf("\n\ncommand\n%+v\n\n", tg.pageMarker)
 	case fromBotPasword:
-		tg.pageMarker[message.From.ID] = models.Pages{MarkerWritePassword: true}
+		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerWritePassword: true}
 	case fromBotWitchCity:
-		tg.pageMarker[message.From.ID] = models.Pages{MarkerSaveCityMarker: true, MarkerFindCity: true}
+		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerSaveCityMarker: true, MarkerFindCity: true}
 	case fromBotWhatTime:
-		tg.pageMarker[message.From.ID] = models.Pages{MarkerWriteTime: true}
+		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerWriteTime: true}
 	case fromBotScheduleName:
-		tg.pageMarker[message.From.ID] = models.Pages{MarkerScheduleName: true}
+		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerScheduleName: true}
 	}
 	if err := tg.sendMessage(msg); err != nil {
 		return err

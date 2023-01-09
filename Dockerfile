@@ -2,10 +2,14 @@ FROM golang:1.20rc1-alpine3.17
 
 WORKDIR /usr/bot
 
-COPY ./ ./
+COPY go.mod ./
+
+COPY go.sum ./
 
 RUN go mod download
 
-RUN go build -o runbot ./cmd/telegrambot/
+COPY ./ ./
+
+RUN go build -o ./runbot ./cmd/telegrambot/
 
 CMD [ "./runbot" ]

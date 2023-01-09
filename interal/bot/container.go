@@ -16,7 +16,7 @@ type container struct {
 	logger *LogrusLogger
 }
 
-func NewContainer() (*container, error) {
+func NewContainer() (Container, error) {
 	conf, err := SetUpConfig()
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig() error. Start application failed %v ", err)
