@@ -15,7 +15,7 @@ type EventRepository struct {
 }
 
 func (er *EventRepository) SaveEvent(ctx context.Context, userID primitive.ObjectID, startTime, name string) (*mongo.InsertOneResult, error) {
-	event := models.Event{
+	event := &models.Event{
 		OwnerID:   userID,
 		EventTime: startTime,
 		EventName: name,

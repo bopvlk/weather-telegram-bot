@@ -22,7 +22,7 @@ type telegramBot struct {
 	updates   tgbotapi.UpdatesChannel
 	forecast  *forecast
 
-	store      storage.Store
+	store      storage.MongoStorage
 	pageMarker map[int64]models.Pages
 }
 

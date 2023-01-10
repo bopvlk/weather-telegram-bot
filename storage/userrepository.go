@@ -14,7 +14,7 @@ type UserRepository struct {
 }
 
 func (ur *UserRepository) SaveUser(ctx context.Context, telegramUserID int64, password, city string) (*mongo.InsertOneResult, error) {
-	usr := models.User{
+	usr := &models.User{
 		TelegramUserID: telegramUserID,
 		PasswordHash:   password,
 		City:           city,
@@ -28,7 +28,7 @@ func (ur *UserRepository) SaveUser(ctx context.Context, telegramUserID int64, pa
 }
 
 func (ur *UserRepository) FindUser(ctx context.Context, telegramUserID int64) (*models.User, error) {
-	var user models.User
+	user := new(models.User)
 	filter := bson.M{"telegram_user_id": telegramUserID}
 	if err := ur.userCollections.FindOne(ctx, filter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -36,5 +36,5 @@ func (ur *UserRepository) FindUser(ctx context.Context, telegramUserID int64) (*
 		}
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }

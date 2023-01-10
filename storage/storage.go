@@ -20,12 +20,12 @@ type client struct {
 	c *mongo.Client
 }
 
-type Store interface {
+type MongoStorage interface {
 	UserRepository() *UserRepository
 	EventRepository() *EventRepository
 }
 
-func NewStorage(ctx context.Context, cfg *models.Config) (Store, error) {
+func NewStorage(ctx context.Context, cfg *models.Config) (MongoStorage, error) {
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
 		ApplyURI(fmt.Sprintf("mongodb://%s:%s@mongodb", cfg.DBUser, cfg.DBPassword)).
@@ -43,14 +43,18 @@ func NewStorage(ctx context.Context, cfg *models.Config) (Store, error) {
 	return &client{c: c}, nil
 }
 
+func newUserRepository(c *mongo.Client) *UserRepository {
+	return &UserRepository{userCollections: c.Database(database).Collection(userCollection)}
+}
+
 func (c *client) UserRepository() *UserRepository {
-	return &UserRepository{
-		userCollections: c.c.Database(database).Collection(userCollection),
-	}
+	return newUserRepository(c.c)
+}
+
+func newEventRepository(c *mongo.Client) *EventRepository {
+	return &EventRepository{eventCollections: c.Database(database).Collection(eventsCollection)}
 }
 
 func (c *client) EventRepository() *EventRepository {
-	return &EventRepository{
-		eventCollections: c.c.Database(database).Collection(eventsCollection),
-	}
+	return newEventRepository(c.c)
 }
