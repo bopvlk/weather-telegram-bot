@@ -34,6 +34,8 @@ func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) erro
 		msg.ReplyMarkup = keyboardStarted
 	case fromBotStartIfLogged:
 		msg.ReplyMarkup = keyboardJustLogged
+	case fromBotULogged:
+		msg.ReplyMarkup = keyboardJustLogged
 	case fromBotSelectPlace:
 		if err := tg.setGeolocationRequest(message.Text); err != nil {
 			return err
@@ -46,7 +48,6 @@ func (tg *telegramBot) printMessage(message *tgbotapi.Message, text string) erro
 		}
 	case fromBotWriteCity:
 		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerFindCity: true}
-		fmt.Printf("\n\ncommand\n%+v\n\n", tg.pageMarker)
 	case fromBotPasword:
 		tg.pageMarker[message.Chat.ID] = models.Pages{MarkerWritePassword: true}
 	case fromBotWitchCity:

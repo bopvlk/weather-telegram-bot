@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/middleware"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jasonlvhit/gocron"
 )
@@ -28,16 +29,16 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 			}
 		}
 	case tg.pageMarker[message.Chat.ID].MarkerWriteTime:
+
 		if err := timeChecker(message.Text); err != nil {
 			if err := tg.printMessage(message, fromBotWrongFormatTime); err != nil {
 				return err
-			} else {
-				delete(tg.pageMarker, message.Chat.ID)
-				toDBEventTime = message.Text
-				if err := tg.printMessage(message, fromBotScheduleName); err != nil {
-					return err
-				}
 			}
+		}
+		delete(tg.pageMarker, message.Chat.ID)
+		toDBEventTime = message.Text
+		if err := tg.printMessage(message, fromBotScheduleName); err != nil {
+			return err
 		}
 	case tg.pageMarker[message.Chat.ID].MarkerScheduleName:
 		delete(tg.pageMarker, message.Chat.ID)
@@ -67,13 +68,16 @@ func (tg *telegramBot) onCommandCreate(ctx context.Context, message *tgbotapi.Me
 				return err
 			}
 		}
-		<-gocron.Start()
 		if err := tg.printMessage(message, "Now you will get notifications with forecast"); err != nil {
 			return err
 		}
+		<-gocron.Start()
 	case tg.pageMarker[message.Chat.ID].MarkerFindCity:
-
-		delete(tg.pageMarker, message.Chat.ID)
+		if tg.pageMarker[message.Chat.ID].MarkerSaveCityMarker {
+			tg.pageMarker[message.Chat.ID] = models.Pages{MarkerSaveCityMarker: true}
+		} else {
+			delete(tg.pageMarker, message.Chat.ID)
+		}
 		if err := tg.printMessage(message, fromBotSelectPlace); err != nil {
 			return err
 		}

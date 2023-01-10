@@ -8,7 +8,12 @@ services:
       - mongodb
     env_file:
       - .env
-      
+    volumes:
+      - ./:/usr/bot
+    environment:
+      - TZ=EET
+      - DEBIAN_FRONTEND=noninteractive 
+
   mongodb:
     restart: always
     image: mongo:focal
@@ -16,4 +21,7 @@ services:
       - .env      
     ports:
         - 2121:27017
+    environment:
+      - TZ=EET
+      - DEBIAN_FRONTEND=noninteractive 
 
