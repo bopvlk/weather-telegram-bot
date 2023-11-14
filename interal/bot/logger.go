@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,7 +37,7 @@ type LogrusLogger struct {
 	entry  *logrus.Entry
 }
 
-func NewLogger(cfg *models.Config) (*LogrusLogger, error) {
+func SetUpLogger(cfg *models.Config) (*LogrusLogger, error) {
 	level, err := logrus.ParseLevel("trace")
 	if err != nil {
 		return nil, fmt.Errorf("can't parse log level: %w", err)

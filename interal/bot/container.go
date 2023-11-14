@@ -3,7 +3,7 @@ package bot
 import (
 	"fmt"
 
-	"git.foxminded.com.ua/2.4-weather-forecast-bot/models"
+	"git.foxminded.com.ua/2.4-weather-forecast-bot/interal/models"
 )
 
 type Container interface {
@@ -16,16 +16,16 @@ type container struct {
 	logger *LogrusLogger
 }
 
-func NewContainer() (*container, error) {
-	conf, err := NewConfig()
+func NewContainer() (Container, error) {
+	conf, err := SetUpConfig()
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig() error. Start application failed %v ", err)
 	}
 
 	// create logger
-	l, err := NewLogger(conf)
+	l, err := SetUpLogger(conf)
 	if err != nil {
-		return nil, fmt.Errorf("Something wrong with logger: %v", err)
+		return nil, fmt.Errorf("something wrong with logger: %v", err)
 	}
 	return &container{
 		config: conf,
