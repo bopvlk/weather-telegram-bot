@@ -1,18 +1,19 @@
-version: '3.8'
+version: '3.3'
    
 services:
   runbot:
     build: ./
-    command: ./runbot
     depends_on:
       - mongodb
     env_file:
       - .env
     volumes:
       - ./:/usr/bot
+    restart: always
     environment:
       - TZ=EET
-      - DEBIAN_FRONTEND=noninteractive 
+      - DEBIAN_FRONTEND=noninteractive
+    # entrypoint: /usr/bot/runbot
 
   mongodb:
     restart: always
